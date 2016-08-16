@@ -1,13 +1,13 @@
 "use strict";
 
 // ************** Generate the tree diagram	 *****************
-function Tree(treeData){
+function Tree(treeData, onClicked){
   var margin = {top: 20, right: 120, bottom: 20, left: 120};
   this.width  = 960 - margin.right - margin.left;
   this.height = 500 - margin.top   - margin.bottom;
 
   this.duration = 200;
-  this.i = 0;
+  this.posCount = 0; // treeの方向を調べるの使う通し番号(データのidとは別)
 
   this.tree = d3.layout.tree()
   	.size([this.height, this.width]);
@@ -15,35 +15,48 @@ function Tree(treeData){
   this.diagonal = d3.svg.diagonal()
   	.projection(function(d) { return [d.y, d.x]; });
 
+  // body要素にsvgタグを追加する
   this.svg = d3.select("body").append("svg")
   	.attr("width",  this.width  + margin.right + margin.left  )
   	.attr("height", this.height + margin.top   + margin.bottom)
-    .append("g")
+    .append("g") // グループ化するタグ
   	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  this.root = treeData[0];
+  this.root = treeData;
   this.root.x0 = this.height / 2;
   this.root.y0 = 0;
 
+  this.onClicked = onClicked;
 
   //============================================================================
   // Toggle children on click.
   this.click = function(d) {
-    if (d.children) {
-    	d._children = d.children;
-    	d.children = null;
-    } else {
-    	d.children = d._children;
-    	d._children = null;
-    }
+    // console.log(d.id);
+    // if (d.children) {
+    // 	d._children = d.children;
+    // 	d.children = null;
+    // } else {
+    // 	d.children = d._children;
+    // 	d._children = null;
+    // }
+
+    this.onClicked(d); // eventlistenerをコール
 
     this.update(d);
+  }
+
+  this.reset = function(treeData){
+    this.root = treeData;
+    this.root.x0 = this.height / 2;
+    this.root.y0 = 0;
+
+    this.update(this.root);
   }
 
   //============================================================================
   // Compute the new tree layout.
   this.update = function(source){
-    var nodes = this.tree.nodes(this.root).reverse();
+    var nodes = this.tree.nodes(this.root).reverse(); // 配下全要素を逆順で取得
   	var links = this.tree.links(nodes);
 
     // Normalize for fixed-depth.
@@ -51,7 +64,7 @@ function Tree(treeData){
 
     // Update the nodes…
     var node = this.svg.selectAll("g.node")
-  	  .data(nodes, function(d) { return d.id || (d.id = ++this.i); }.bind(this));
+  	  .data(nodes, function(d) { return d.pos || (d.pos = ++this.posCount); }.bind(this)); // ノードにidをつけていく
 
     // Enter any new nodes at the parent's previous position.
     var nodeEnter = node.enter().append("g")
@@ -96,7 +109,7 @@ function Tree(treeData){
 
     // Update the links…
     var link = this.svg.selectAll("path.link")
-  	  .data(links, function(d) { return d.target.id; });
+  	  .data(links, function(d) { return d.target.pos; });
 
     // Enter any new links at the parent's previous position.
     link.enter().insert("path", "g")
@@ -128,7 +141,7 @@ function Tree(treeData){
     });
   }
 
-  this.update(this.root, this.tree);
+  this.update(this.root);
 
   d3.select(self.frameElement).style("height", "500px");
 

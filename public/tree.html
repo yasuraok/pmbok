@@ -34,36 +34,71 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="tree.js"></script>
     <script type="text/javascript">
-    var sample = [
-      {
-        "name": "Top Level",
-        "parent": "null",
-        "children": [
-          {
-            "name": "Level 2: A",
-            "parent": "Top Level",
-            "children": [
-              {
-                "name": "Son of A",
-                "parent": "Level 2: A"
-              },
-              {
-                "name": "Daughter of A",
-                "parent": "Level 2: A"
-              }
-            ]
-          },
-          {
-            "name": "Level 2: B",
-            "parent": "Top Level"
-          }
-        ]
-      }
-    ];
 
-    var tree = undefined;
+    var sample = {
+      0 : {
+        "name": "Top Level",
+        "children": [ 1, 4]
+      },
+      1 : {
+        "name": "Level 2: A",
+        "children": [ 2, 3]
+      },
+      2 : {
+        "name": "Son of A",
+        "children": []
+      },
+      3 : {
+        "name": "Daughter of A",
+        "children": []
+      },
+      4 : {
+        "name": "Level 2: B",
+        "children": []
+      }
+    };
+
+    var i = 5;
+
+    function create(name){
+      return {
+        "name": name,
+        "children": []
+      }
+    }
+
+    // ツリー構造にしてd3のtree viewに渡す
+    var treefy = function(id, records){
+      var record = records[id];
+      var newObj = JSON.parse(JSON.stringify(record)); //Object.create( records[id] );
+      newObj.children = [];
+      newObj.id       = id;
+      for (var i in record.children) {
+        newObj.children.push(treefy(record.children[i], records));
+      }
+      return newObj;
+    }
+
+    var obj = undefined;
+
+    var onClicked = function(d){
+      console.log(d.id);
+      sample[i] = create("new task");
+      sample[d.id].children.push(i);
+      i++;
+
+      var tree = treefy(0, sample);
+      obj.reset(tree);
+    }
+
+    var makeGraph = function(){
+      var tree = treefy(0, sample);
+      console.log(tree);
+      obj = new Tree(tree, onClicked);
+    }
+
     window.onload = function(){
-      tree = new Tree(sample);
+      makeGraph();
     }
     </script>
   </head>
