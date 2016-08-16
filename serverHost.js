@@ -62,35 +62,9 @@ function ServerHost(){ return{
     this.g_io.sockets.emit("update", this.model.data);
   },
 
-  // wsjsonクライアントとしてネットワークに参加する
-  join_as_wsjson : function(socket, param) {
-    var obj = {
-      name: param ? param.name : socket.id,
-      type: "json",
-    };
-    this.open_input(socket, obj, "wsjson");
-    this.open_output(socket, obj, "wsjson");
-  },
-
-  // ネットワークから離脱する
-  exit_wsjson : function(socket) {
-    var inputExisted = this.clients.deleteClientInput (this.clients.socketId2InputClientId (socket.id));
-    var outputExisted = this.clients.deleteClientOutput(this.clients.socketId2OutputClientId(socket.id));
-    if(inputExisted || outputExisted){
-      console.log("[Web Socket #'" + socket.id + "'] exited.");
-    }
-    this.update_list(); // ネットワーク更新
-  },
-
   // JSONメッセージを受信する
   message_json : function(socket, obj){
-    var inputId  = this.clients.socketId2InputClientId(socket.id);
-
-    if (inputId >= 0) { // joinしたクライアントだけがメッセージのやり取りに参加できる
-      // console.log("message from input #" + inputId);
-
-      this.clients.deliver(inputId, obj); // 配信
-    }
+    console.log("message from input #" + obj);
   },
 
   //------------------
@@ -124,10 +98,6 @@ function ServerHost(){ return{
 
   // websocketとしての応答内容を記述
   onWebSocket : function(socket){
-    socket.on("join_as_wsjson",      this.join_as_wsjson.bind(this, socket) ); // wsjsonクライアントとしてネットワークに参加する
-    socket.on("exit_wsjson",         this.exit_wsjson.bind(this, socket) );    // ネットワークから離脱する
     socket.on("message_json",        this.message_json.bind(this, socket) );   // JSONメッセージを受信する
-
-    socket.on("disconnect",   this.disconnect.bind(this, socket) );
   },
 }};
