@@ -15,10 +15,6 @@
 
       window.onload = function(){
         var ctrl = new Ctrl();
-        graphCreatorInit(window.d3, window.saveAs, window.Blob, function(json){
-          console.log("update");
-          ctrl.socket.emit("message_json", json);
-        });
       }
     </script>
   </head>

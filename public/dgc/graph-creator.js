@@ -77,6 +77,7 @@ var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
           thisGraph.dragmove.call(thisGraph, args);
         })
         .on("dragend", function() {
+          thisGraph.updateGraph(true);
           // todo check if edge-mode is selected
         });
 
@@ -119,7 +120,7 @@ var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
 
   // handle download data
   d3.select("#download-input").on("click", function(){
-    var blob = new Blob(thisGraph.dumps(), {type: "text/plain;charset=utf-8"});
+    var blob = new Blob(window.JSON.stringify(thisGraph.dumps()), {type: "text/plain;charset=utf-8"});
     saveAs(blob, "mydag.json");
   });
 
@@ -137,7 +138,7 @@ var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
         var txtRes = filereader.result;
         // TODO better error handling
         try{
-          thisGraph.loads(txtRes);
+          thisGraph.loads(JSON.parse(txtRes));
         }catch(err){
           window.alert("Error parsing uploaded file\nerror message: " + err.message);
           return;
@@ -181,12 +182,11 @@ GraphCreator.prototype.dumps = function(){
   thisGraph.edges.forEach(function(val, i){
     saveEdges.push({source: val.source.id, target: val.target.id});
   });
-  return window.JSON.stringify({"nodes": thisGraph.nodes, "edges": saveEdges});
+  return {"nodes": thisGraph.nodes, "edges": saveEdges};
 }
 
-GraphCreator.prototype.loads = function(txtRes){
+GraphCreator.prototype.loads = function(jsonObj){
   var thisGraph = this;
-  var jsonObj = JSON.parse(txtRes);
   thisGraph.deleteGraph(true);
   thisGraph.nodes = jsonObj.nodes;
   thisGraph.setIdCt(jsonObj.nodes.length + 1);
@@ -210,16 +210,16 @@ GraphCreator.prototype.dragmove = function(d) {
   }
 };
 
-GraphCreator.prototype.deleteGraph = function(skipPrompt){
+GraphCreator.prototype.deleteGraph = function(force){
   var thisGraph = this,
       doDelete = true;
-  if (!skipPrompt){
+  if (! force){
     doDelete = window.confirm("Press OK to delete this graph");
   }
   if(doDelete){
     thisGraph.nodes = [];
     thisGraph.edges = [];
-    thisGraph.updateGraph();
+    thisGraph.updateGraph(! force);
   }
 };
 
@@ -393,7 +393,7 @@ GraphCreator.prototype.circleMouseUp = function(d3node, d){
     });
     if (!filtRes[0].length){
       thisGraph.edges.push(newEdge);
-      thisGraph.updateGraph();
+      thisGraph.updateGraph(true);
     }
   } else{
     // we're in the same node
@@ -444,7 +444,7 @@ GraphCreator.prototype.svgMouseUp = function(){
     var xycoords = d3.mouse(thisGraph.svgG.node()),
         d = {id: thisGraph.idct++, title: consts.defaultTitle, x: xycoords[0], y: xycoords[1]};
     thisGraph.nodes.push(d);
-    thisGraph.updateGraph();
+    thisGraph.updateGraph(true);
     // make title of text immediently editable
     var d3txt = thisGraph.changeTextOfNode(thisGraph.circles.filter(function(dval){
       return dval.id === d.id;
@@ -480,11 +480,11 @@ GraphCreator.prototype.svgKeyDown = function() {
       thisGraph.nodes.splice(thisGraph.nodes.indexOf(selectedNode), 1);
       thisGraph.spliceLinksForNode(selectedNode);
       state.selectedNode = null;
-      thisGraph.updateGraph();
+      thisGraph.updateGraph(true);
     } else if (selectedEdge){
       thisGraph.edges.splice(thisGraph.edges.indexOf(selectedEdge), 1);
       state.selectedEdge = null;
-      thisGraph.updateGraph();
+      thisGraph.updateGraph(true);
     }
     break;
   }
@@ -495,7 +495,7 @@ GraphCreator.prototype.svgKeyUp = function() {
 };
 
 // call to propagate changes to graph
-GraphCreator.prototype.updateGraph = function(){
+GraphCreator.prototype.updateGraph = function(updateData){
 
   var thisGraph = this,
       consts = thisGraph.consts,
@@ -570,7 +570,9 @@ GraphCreator.prototype.updateGraph = function(){
   thisGraph.circles.exit().remove();
 
   // notify
-  thisGraph.onUpdate(thisGraph.dumps());
+  if (updateData){
+    thisGraph.onUpdate(thisGraph.dumps());
+  }
 };
 
 GraphCreator.prototype.zoomed = function(){

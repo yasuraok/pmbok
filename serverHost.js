@@ -17,17 +17,14 @@ var SETTING_FILE = dirHome + "/pmbok.json";
 function Model(){ return {
   data: {},
 
-  saveSettings: function(){
-
-    // 設定情報を保存
+  save: function(){
     var buf = JSON.stringify(this.data);
     fs.writeFile(SETTING_FILE, buf, "utf-8", function (err) {
-      console.log("saveSettings");
+      console.log("save");
 		});
   },
 
-  loadSettings: function(){
-    // 設定の読み込み
+  load: function(){
     if (fs.existsSync(SETTING_FILE)) {
       // 設定情報を読み込み
       var buf = fs.readFileSync(SETTING_FILE, "utf-8");
@@ -53,18 +50,15 @@ function ServerHost(){ return{
 
   // 初期化
   init : function(){
-    this.model.loadSettings();
+    this.model.load();
     this.openWebSocket();
   },
 
-  // ネットワーク接続者一覧を表示する(socketだからサーバー側からpush可能)
-  update : function(){
-    this.g_io.sockets.emit("update", this.model.data);
-  },
-
   // JSONメッセージを受信する
-  message_json : function(socket, obj){
-    console.log("message from input #" + obj);
+  editData : function(socket, obj){
+    this.model.data = obj;
+    console.log("message from input #" + socket, obj);
+    this.g_io.sockets.emit("data", this.model.data);
   },
 
   //------------------
@@ -98,6 +92,6 @@ function ServerHost(){ return{
 
   // websocketとしての応答内容を記述
   onWebSocket : function(socket){
-    socket.on("message_json",        this.message_json.bind(this, socket) );   // JSONメッセージを受信する
+    socket.on("data",        this.editData.bind(this, socket) );   // JSONメッセージを受信する
   },
 }};
