@@ -77,7 +77,6 @@ var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
           thisGraph.dragmove.call(thisGraph, args);
         })
         .on("dragend", function() {
-          thisGraph.updateGraph(true);
           // todo check if edge-mode is selected
         });
 
@@ -262,7 +261,7 @@ GraphCreator.prototype.spliceLinksForNode = function(node) {
 
 GraphCreator.prototype.replaceSelectEdge = function(d3Path, edgeData){
   var thisGraph = this;
-  d3Path.classed(thisGraph.consts.selectedClass, true);
+  d3Path.classed(thisGraph.consts.selectedClass, true); // mark css as selected
   if (thisGraph.state.selectedEdge){
     thisGraph.removeSelectFromEdge();
   }
@@ -271,7 +270,7 @@ GraphCreator.prototype.replaceSelectEdge = function(d3Path, edgeData){
 
 GraphCreator.prototype.replaceSelectNode = function(d3Node, nodeData){
   var thisGraph = this;
-  d3Node.classed(this.consts.selectedClass, true);
+  d3Node.classed(thisGraph.consts.selectedClass, true); // mark css as selected
   if (thisGraph.state.selectedNode){
     thisGraph.removeSelectFromNode();
   }
@@ -384,22 +383,14 @@ GraphCreator.prototype.circleMouseUp = function(d3node, d){
 
   if (mouseDownNode !== d){
     // we're in a different node: create new edge for mousedown edge and add to graph
-    var newEdge = {source: mouseDownNode, target: d};
-    var filtRes = thisGraph.paths.filter(function(d){
-      if (d.source === newEdge.target && d.target === newEdge.source){
-        thisGraph.edges.splice(thisGraph.edges.indexOf(d), 1);
-      }
-      return d.source === newEdge.source && d.target === newEdge.target;
-    });
-    if (!filtRes[0].length){
-      thisGraph.edges.push(newEdge);
-      thisGraph.updateGraph(true);
-    }
+    thisGraph.addEdge(mouseDownNode, d);
+
   } else{
     // we're in the same node
     if (state.justDragged) {
       // dragged, not clicked
       state.justDragged = false;
+      thisGraph.updateGraph(true);
     } else{
       // clicked, not dragged
       if (d3.event.shiftKey){
@@ -426,6 +417,21 @@ GraphCreator.prototype.circleMouseUp = function(d3node, d){
   return;
 
 }; // end of circles mouseup
+
+GraphCreator.prototype.addEdge = function(mouseDownNode, d){
+  var thisGraph = this;
+  var newEdge = {source: mouseDownNode, target: d};
+  var filtRes = thisGraph.paths.filter(function(d){
+    if (d.source === newEdge.target && d.target === newEdge.source){
+      thisGraph.edges.splice(thisGraph.edges.indexOf(d), 1);
+    }
+    return d.source === newEdge.source && d.target === newEdge.target;
+  });
+  if (!filtRes[0].length){
+    thisGraph.edges.push(newEdge);
+    thisGraph.updateGraph(true);
+  }
+}
 
 // mousedown on main svg
 GraphCreator.prototype.svgMouseDown = function(){
