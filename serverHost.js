@@ -51,14 +51,6 @@ function ServerHost(){
   this.openWebSocket(); // setup connections
 }
 
-// JSONメッセージを受信する
-ServerHost.prototype.onEditData = function(socket, obj){
-  this.model.data = obj;
-  console.log("message from input #" + socket, obj);
-  this.io.sockets.emit("data", this.model.data);
-  this.model.save();
-},
-
 ServerHost.prototype.openWebSocket = function(){
   this.httpApp= connect();
   this.httpApp.use(serveStatic(PUBLIC_DIR));
@@ -84,8 +76,21 @@ ServerHost.prototype.openWebSocket = function(){
   console.log("================================================");
 };
 
-// websocketとしての応答内容を記述
+// register web socket event handler
 ServerHost.prototype.onConnection = function(socket){
-  // register web socket event handler
   socket.on("data",        this.onEditData.bind(this, socket) );   // JSONメッセージを受信する
+  socket.on("request",     this.onRequest .bind(this, socket) );   // JSONメッセージを受信する
+};
+
+// JSONメッセージを受信する
+ServerHost.prototype.onRequest = function(socket, obj){
+  socket.emit("data", this.model.data);
+};
+
+// JSONメッセージを受信する
+ServerHost.prototype.onEditData = function(socket, obj){
+  this.model.data = obj;
+  console.log("message from input #" + socket, obj);
+  this.io.sockets.emit("data", this.model.data);
+  this.model.save();
 };
