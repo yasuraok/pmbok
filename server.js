@@ -26,8 +26,7 @@ if(argv.test){
 // start server
 //==============================================================================
 var serverHost = require('./serverHost');
-var g_server   = serverHost.create();
-g_server.init();
+var g_server   = new serverHost.ServerHost();
 
 //==============================================================================
 // graceful shutdown
