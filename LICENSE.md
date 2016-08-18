@@ -17,3 +17,8 @@ with the following licenses:
 Code Block: [Interactive d3.js tree diagram](http://bl.ocks.org/d3noob/8375092).
 Author: [d3noob](http://bl.ocks.org/d3noob)
 
+-------------------------------------------------------------------------
+
+Library: [directed-graph-creator](https://github.com/cjrd/directed-graph-creator) @01c83e88b227ec8451798f6e5385f9b1294bfd36
+License: MIT/X
+Author: [Colorado Reed](https://github.com/cjrd)

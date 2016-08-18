@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <link rel="stylesheet" href="/dgc/graph-creator.css" />
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="//d3js.org/d3.v3.js" charset="utf-8"></script>
+    <script src="//cdn.jsdelivr.net/filesaver.js/0.1/FileSaver.min.js"></script>
+
+    <script src="dgc/graph-creator.js"></script>
+    <script src="socket_client.js"></script>
+
+    <script type="text/javascript">
+      "use strict";
+
+      window.onload = function(){
+        var ctrl = new Ctrl();
+      }
+    </script>
+  </head>
+
+  <body>
+    <div id="graph">
+    <div id="toolbox">
+      <input type="file" id="hidden-file-upload">
+      <input type="image" id="upload-input"   title="upload graph"   src="/dgc/upload-icon.png"   alt="upload graph">
+      <input type="image" id="download-input" title="download graph" src="/dgc/download-icon.png" alt="download graph">
+      <input type="image" id="delete-graph"   title="delete graph"   src="/dgc/trash-icon.png"    alt="delete graph">
+    </div>
+    </div>
+  </body>
+
+</html>
