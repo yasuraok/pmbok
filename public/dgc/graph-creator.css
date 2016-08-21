@@ -4,8 +4,8 @@ body{
     overflow:hidden;
 }
 
-p{ 
-     text-align: center; 
+p{
+     text-align: center;
      overflow: overlay;
      position: relative;
 }
@@ -21,14 +21,14 @@ body{
 }
 
 #toolbox{
-    position: absolute;
+    position: relative;
     bottom: 0;
     left: 0;
-    margin-bottom: 0.5em;
-    margin-left: 1em;
+    margin-bottom: 0em;
+    margin-left:   0em;
     border: 2px solid #EEEEEE;
     border-radius: 5px;
-    padding: 1em;
+    padding: 0.2em;
     z-index: 5;
 }
 

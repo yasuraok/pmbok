@@ -603,14 +603,14 @@ function graphCreatorInit(d3, saveAs, Blob, onUpdate){
     return "Make sure to save your graph locally before leaving :-)";
   };
 
-  var docEl = document.documentElement,
-      bodyEl = document.getElementsByTagName('body')[0];
+  var docEl  = document.documentElement;
+  var bodyEl = document.getElementsByTagName('body')[0];
 
-  var width = window.innerWidth || docEl.clientWidth || bodyEl.clientWidth,
-      height =  window.innerHeight|| docEl.clientHeight|| bodyEl.clientHeight;
+  var width  = window.innerWidth || docEl.clientWidth || bodyEl.clientWidth;
+  var height = window.innerHeight|| docEl.clientHeight|| bodyEl.clientHeight;
 
-  var xLoc = width/2 - 25,
-      yLoc = 100;
+  var xLoc = width/2 - 25;
+  var yLoc = 100;
 
   // initial node data
   var nodes = [];
