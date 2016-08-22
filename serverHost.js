@@ -59,6 +59,12 @@ ServerHost.prototype.onConnection = function(socket){
   // for project
   socket.on("requestData", this.onRequestData.bind(this, socket) );
   socket.on("updateData",  this.onUpdateData .bind(this, socket) );
+
+  // remove client connection
+  socket.on('disconnect', function(socketId) {
+    delete this.socket2prjId[socketId];
+    console.log("disconnect: ", this.socket2prjId);
+  }.bind(this, socket.id));
 };
 
 // send current project list
