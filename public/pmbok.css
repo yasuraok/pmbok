@@ -1,0 +1,20 @@
+h1 {
+  margin: 5px;
+  font-weight: lighter;
+}
+
+div.parent {
+  display: table;
+}
+
+div.child1 {
+  display: table-cell;
+  width: 240px;
+  border: solid 1px #99CCFF;
+}
+
+div.child2 {
+  display: table-cell;
+  height: 100%;
+  border: solid 1px #333333;
+}

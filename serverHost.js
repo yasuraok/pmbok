@@ -2,8 +2,8 @@ module.exports = {
   ServerHost: ServerHost,
 }
 
-var os          = require('os');
-var fs          = require("fs");
+var projectManager = require('./projectManager');
+var os          = require("os");
 var http        = require('http');
 var connect     = require('connect');
 var serveStatic = require('serve-static');
@@ -11,43 +11,16 @@ var socketio    = require("socket.io");
 
 var LISTEN_PORT  = 8000;
 var PUBLIC_DIR   = __dirname + "/public";
-// var dirHome      = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
-var SETTING_FILE = __dirname + "/pmbok.json";
-
-function Model(){ return {
-  data: {},
-
-  save: function(){
-    var buf = JSON.stringify(this.data);
-    fs.writeFile(SETTING_FILE, buf, "utf-8", function (err) {
-      console.log("save");
-		});
-  },
-
-  load: function(){
-    if (fs.existsSync(SETTING_FILE)) {
-      // 設定情報を読み込み
-      var buf = fs.readFileSync(SETTING_FILE, "utf-8");
-      try{
-        this.data = JSON.parse(buf);
-      }
-      catch (e) {
-        // no process
-      }
-    }
-  },
-
-}}
-
 
 function ServerHost(){
-  this.serverAddress = undefined;
-  this.model         = Model();
-  this.httpApp       = undefined;
-  this.server        = undefined;
-  this.io            = undefined;
+  this.serverAddress  = undefined;
+  this.projectManager = new projectManager.ProjectManager();
+  this.projects       = {}; // prjId  => project;
+  this.socket2prjId   = {}; // socket => projectId;
+  this.httpApp        = undefined;
+  this.server         = undefined;
+  this.io             = undefined;
 
-  this.model.load();    // load data
   this.openWebSocket(); // setup connections
 }
 
@@ -78,19 +51,53 @@ ServerHost.prototype.openWebSocket = function(){
 
 // register web socket event handler
 ServerHost.prototype.onConnection = function(socket){
-  socket.on("data",        this.onEditData.bind(this, socket) );   // JSONメッセージを受信する
-  socket.on("request",     this.onRequest .bind(this, socket) );   // JSONメッセージを受信する
+  // for project manager
+  socket.on("requestProjects", this.onRequestProjects.bind(this, socket) );
+  // socket.on("newProject",  this.onNewProject .bind(this, socket) );
+  socket.on("openProject",     this.onOpenProject    .bind(this, socket) );
+
+  // for project
+  socket.on("requestData", this.onRequestData.bind(this, socket) );
+  socket.on("updateData",  this.onUpdateData .bind(this, socket) );
 };
 
-// JSONメッセージを受信する
-ServerHost.prototype.onRequest = function(socket, obj){
-  socket.emit("data", this.model.data);
+// send current project list
+ServerHost.prototype.onRequestProjects = function(socket){
+  // console.log(this.projectManager.getPrjList());
+  socket.emit("projects", this.projectManager.getPrjList());
+}
+
+// open project for the socket and send initial data
+ServerHost.prototype.onOpenProject = function(socket, prjId){
+  var prj = this.projectManager.openPrject(prjId);
+  if (prj){
+    this.socket2prjId[socket] = prjId;
+    this.projects[prjId]      = prj;
+    socket.emit("data", prj.getData());
+  }
 };
 
-// JSONメッセージを受信する
-ServerHost.prototype.onEditData = function(socket, obj){
-  this.model.data = obj;
-  console.log("message from input #" + socket, obj);
-  this.io.sockets.emit("data", this.model.data);
-  this.model.save();
+// return current data when being requested by client
+ServerHost.prototype.onRequestData = function(socket){
+  var prj = this.projects[this.socket2prjId[socket]];
+  if (prj){
+    socket.emit("data", prj.getData());
+  }
+};
+
+// receive new data and share it with all clients who are seeing the same project
+ServerHost.prototype.onUpdateData = function(socket, data){
+  var prjId = this.socket2prjId[socket];
+  var prj   = this.projects[prjId];
+  if (prj){
+    prj.updateData(data);
+    console.log("message from input #" + socket, data);
+
+    for (var s in this.socket2prjId){
+      if (s != socket && prjId == this.socket2prjId[s]){
+        this.io.sockets.emit("data", prj.getData());
+      }
+    }
+  }
+
 };
