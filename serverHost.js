@@ -59,6 +59,12 @@ ServerHost.prototype.onConnection = function(socket){
   // for project
   socket.on("requestData", this.onRequestData.bind(this, socket) );
   socket.on("updateData",  this.onUpdateData .bind(this, socket) );
+
+  // remove client connection
+  socket.on('disconnect', function(socketId) {
+    delete this.socket2prjId[socketId];
+    console.log("disconnect: ", this.socket2prjId);
+  }.bind(this, socket.id));
 };
 
 // send current project list
@@ -71,15 +77,15 @@ ServerHost.prototype.onRequestProjects = function(socket){
 ServerHost.prototype.onOpenProject = function(socket, prjId){
   var prj = this.projectManager.openPrject(prjId);
   if (prj){
-    this.socket2prjId[socket] = prjId;
-    this.projects[prjId]      = prj;
+    this.socket2prjId[socket.id] = prjId;
+    this.projects[prjId]         = prj;
     socket.emit("data", prj.getData());
   }
 };
 
 // return current data when being requested by client
 ServerHost.prototype.onRequestData = function(socket){
-  var prj = this.projects[this.socket2prjId[socket]];
+  var prj = this.projects[this.socket2prjId[socket.id]];
   if (prj){
     socket.emit("data", prj.getData());
   }
@@ -87,15 +93,16 @@ ServerHost.prototype.onRequestData = function(socket){
 
 // receive new data and share it with all clients who are seeing the same project
 ServerHost.prototype.onUpdateData = function(socket, data){
-  var prjId = this.socket2prjId[socket];
+  var prjId = this.socket2prjId[socket.id];
   var prj   = this.projects[prjId];
   if (prj){
     prj.updateData(data);
     console.log("message from input #" + socket, data);
-
-    for (var s in this.socket2prjId){
-      if (s != socket && prjId == this.socket2prjId[s]){
-        this.io.sockets.emit("data", prj.getData());
+    for (var sid in this.socket2prjId){
+      // console.log(sid, socket.id, prjId, this.socket2prjId[sid]);
+      if (sid != socket.id && prjId == this.socket2prjId[sid]){
+        console.log("sync to socket:", sid);
+        this.io.sockets.to(sid).emit("data", prj.getData());
       }
     }
   }
