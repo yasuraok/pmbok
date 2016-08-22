@@ -119,7 +119,8 @@ var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
 
   // handle download data
   d3.select("#download-input").on("click", function(){
-    var blob = new Blob(window.JSON.stringify(thisGraph.dumps()), {type: "text/plain;charset=utf-8"});
+    var json = window.JSON.stringify(thisGraph.dumps());
+    var blob = new Blob([json], {type: "text/plain;charset=utf-8"});
     saveAs(blob, "mydag.json");
   });
 
