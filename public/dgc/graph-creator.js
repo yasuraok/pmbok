@@ -94,12 +94,16 @@ var GraphCreator = function(
   // listen for key events
   d3.select(window).on("keydown", function(){
     thisGraph.svgKeyDown.call(thisGraph);
-  })
-  .on("keyup", function(){
+  });
+  d3.select(window).on("keyup", function(){
     thisGraph.svgKeyUp.call(thisGraph);
   });
-  svg.on("mousedown", function(d){thisGraph.svgMouseDown.call(thisGraph, d);});
-  svg.on("mouseup", function(d){thisGraph.svgMouseUp.call(thisGraph, d);});
+  svg.on("mousedown", function(d){
+    thisGraph.svgMouseDown.call(thisGraph, d);
+  });
+  svg.on("mouseup", function(d){
+    thisGraph.svgMouseUp.call(thisGraph, d);
+  });
 
   // listen for dragging
   var dragSvg = d3.behavior.zoom()
@@ -126,7 +130,9 @@ var GraphCreator = function(
   svg.call(dragSvg).on("dblclick.zoom", null);
 
   // listen for resize
-  window.onresize = function(){thisGraph.updateWindow(svg);};
+  window.onresize = function(){
+    thisGraph.updateWindow(svg);
+  };
 
   // handle download data
   d3.select("#download-input").on("click", function(){
