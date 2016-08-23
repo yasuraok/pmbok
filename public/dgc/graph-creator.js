@@ -8,14 +8,25 @@ var settings = {
   appendElSpec: "#graph"
 };
 
+/**** MAIN ****/
+var GraphCreator = function(
+  d3,
+  saveAs,
+  Blob,
+  onUpdate
+){
+  var size  = calcSize();
 
-// define graphcreator object
-var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
+  /** MAIN SVG **/
+  var svg = d3.select(settings.appendElSpec).append("svg")
+        .attr("width",  size.w)
+        .attr("height", size.h);
+
   var thisGraph = this;
       thisGraph.idct = 0;
 
-  thisGraph.nodes = nodes || [];
-  thisGraph.edges = edges || [];
+  thisGraph.nodes = [];
+  thisGraph.edges = [];
   thisGraph.onUpdate = onUpdate;
 
   thisGraph.state = {
@@ -596,34 +607,12 @@ GraphCreator.prototype.updateWindow = function(svg){
   svg.attr("width", x).attr("height", y);
 };
 
-/**** MAIN ****/
-function graphCreatorInit(d3, saveAs, Blob, onUpdate){
-
-  // warn the user when leaving
-  window.onbeforeunload = function(){
-    return "Make sure to save your graph locally before leaving :-)";
-  };
-
+function calcSize(){
   var docEl  = document.documentElement;
   var bodyEl = document.getElementsByTagName('body')[0];
 
   var width  = window.innerWidth || docEl.clientWidth || bodyEl.clientWidth;
   var height = window.innerHeight|| docEl.clientHeight|| bodyEl.clientHeight;
 
-  var xLoc = width/2 - 25;
-  var yLoc = 100;
-
-  // initial node data
-  var nodes = [];
-  var edges = [];
-
-  /** MAIN SVG **/
-  var svg = d3.select(settings.appendElSpec).append("svg")
-        .attr("width", width)
-        .attr("height", height);
-  var graph = new GraphCreator(svg, nodes, edges, saveAs, onUpdate);
-  graph.setIdCt(2);
-  graph.updateGraph();
-
-  return graph;
+  return {w: width, h: height};
 }

@@ -8,7 +8,10 @@ var Ctrl = function(){
   this.setSocketAPI();
 
   // initialize graph view
-  this.graph = graphCreatorInit(window.d3, window.saveAs, window.Blob, this.sendToServer.bind(this));
+  this.graph = new GraphCreator(
+    window.d3, window.saveAs, window.Blob,
+    this.sendToServer.bind(this)
+  );
 
   // request project list
   this.socket.emit("requestProjects");
