@@ -1,22 +1,31 @@
 "use strict";
 
 // TODO add user settings
-var consts = {
-  defaultTitle: "random variable"
-};
 var settings = {
   appendElSpec: "#graph"
 };
 
+/**** MAIN ****/
+var GraphCreator = function(
+  d3,
+  saveAs,           // set window.saveAs
+  Blob,
+  onRequestNewNode, // (x, y, title) handler for adding new node
+  onUpdate          // ({nodes:, edges:}) handler for updating records
+){
+  var size  = calcSize();
 
-// define graphcreator object
-var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
+  /** MAIN SVG **/
+  var svg = d3.select(settings.appendElSpec).append("svg")
+        .attr("width",  size.w)
+        .attr("height", size.h);
+
   var thisGraph = this;
-      thisGraph.idct = 0;
 
-  thisGraph.nodes = nodes || [];
-  thisGraph.edges = edges || [];
-  thisGraph.onUpdate = onUpdate;
+  thisGraph.nodes = [];
+  thisGraph.edges = [];
+  thisGraph.onRequestNewNode = onRequestNewNode;
+  thisGraph.onUpdate         = onUpdate;
 
   thisGraph.state = {
     selectedNode: null,
@@ -83,12 +92,16 @@ var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
   // listen for key events
   d3.select(window).on("keydown", function(){
     thisGraph.svgKeyDown.call(thisGraph);
-  })
-  .on("keyup", function(){
+  });
+  d3.select(window).on("keyup", function(){
     thisGraph.svgKeyUp.call(thisGraph);
   });
-  svg.on("mousedown", function(d){thisGraph.svgMouseDown.call(thisGraph, d);});
-  svg.on("mouseup", function(d){thisGraph.svgMouseUp.call(thisGraph, d);});
+  svg.on("mousedown", function(d){
+    thisGraph.svgMouseDown.call(thisGraph, d);
+  });
+  svg.on("mouseup", function(d){
+    thisGraph.svgMouseUp.call(thisGraph, d);
+  });
 
   // listen for dragging
   var dragSvg = d3.behavior.zoom()
@@ -115,7 +128,9 @@ var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
   svg.call(dragSvg).on("dblclick.zoom", null);
 
   // listen for resize
-  window.onresize = function(){thisGraph.updateWindow(svg);};
+  window.onresize = function(){
+    thisGraph.updateWindow(svg);
+  };
 
   // handle download data
   d3.select("#download-input").on("click", function(){
@@ -158,10 +173,6 @@ var GraphCreator = function(svg, nodes, edges, saveAs, onUpdate){
   });
 };
 
-GraphCreator.prototype.setIdCt = function(idct){
-  this.idct = idct;
-};
-
 GraphCreator.prototype.consts =  {
   selectedClass: "selected",
   connectClass: "connect-node",
@@ -189,7 +200,6 @@ GraphCreator.prototype.loads = function(jsonObj){
   var thisGraph = this;
   thisGraph.deleteGraph(true);
   thisGraph.nodes = jsonObj.nodes;
-  thisGraph.setIdCt(jsonObj.nodes.length + 1);
   var newEdges = jsonObj.edges;
   newEdges.forEach(function(e, i){
     newEdges[i] = {source: thisGraph.nodes.filter(function(n){return n.id == e.source;})[0],
@@ -447,18 +457,16 @@ GraphCreator.prototype.svgMouseUp = function(){
     // dragged not clicked
     state.justScaleTransGraph = false;
   } else if (state.graphMouseDown && d3.event.shiftKey){
-    // clicked not dragged from svg
-    var xycoords = d3.mouse(thisGraph.svgG.node()),
-        d = {id: thisGraph.idct++, title: consts.defaultTitle, x: xycoords[0], y: xycoords[1]};
-    thisGraph.nodes.push(d);
-    thisGraph.updateGraph(true);
-    // make title of text immediently editable
-    var d3txt = thisGraph.changeTextOfNode(thisGraph.circles.filter(function(dval){
-      return dval.id === d.id;
-    }), d),
-        txtNode = d3txt.node();
-    thisGraph.selectElementContents(txtNode);
-    txtNode.focus();
+    // clicked not dragged from svg -> new node
+    var xycoords = d3.mouse(thisGraph.svgG.node());
+    thisGraph.onRequestNewNode(xycoords[0], xycoords[1]);
+    // // make title of text immediently editable
+    // var d3txt = thisGraph.changeTextOfNode(thisGraph.circles.filter(function(dval){
+    //   return dval.id === d.id;
+    // }), d),
+    //     txtNode = d3txt.node();
+    // thisGraph.selectElementContents(txtNode);
+    // txtNode.focus();
   } else if (state.shiftNodeDrag){
     // dragged from node
     state.shiftNodeDrag = false;
@@ -596,34 +604,12 @@ GraphCreator.prototype.updateWindow = function(svg){
   svg.attr("width", x).attr("height", y);
 };
 
-/**** MAIN ****/
-function graphCreatorInit(d3, saveAs, Blob, onUpdate){
-
-  // warn the user when leaving
-  window.onbeforeunload = function(){
-    return "Make sure to save your graph locally before leaving :-)";
-  };
-
+function calcSize(){
   var docEl  = document.documentElement;
   var bodyEl = document.getElementsByTagName('body')[0];
 
   var width  = window.innerWidth || docEl.clientWidth || bodyEl.clientWidth;
   var height = window.innerHeight|| docEl.clientHeight|| bodyEl.clientHeight;
 
-  var xLoc = width/2 - 25;
-  var yLoc = 100;
-
-  // initial node data
-  var nodes = [];
-  var edges = [];
-
-  /** MAIN SVG **/
-  var svg = d3.select(settings.appendElSpec).append("svg")
-        .attr("width", width)
-        .attr("height", height);
-  var graph = new GraphCreator(svg, nodes, edges, saveAs, onUpdate);
-  graph.setIdCt(2);
-  graph.updateGraph();
-
-  return graph;
+  return {w: width, h: height};
 }
