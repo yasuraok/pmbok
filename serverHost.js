@@ -57,8 +57,9 @@ ServerHost.prototype.onConnection = function(socket){
   socket.on("openProject",     this.onOpenProject    .bind(this, socket) );
 
   // for project
-  socket.on("requestData", this.onRequestData.bind(this, socket) );
-  socket.on("updateData",  this.onUpdateData .bind(this, socket) );
+  socket.on("requestData",   this.onRequestData  .bind(this, socket) );
+  socket.on("addNewNode",    this.onAddNewNode   .bind(this, socket) );
+  socket.on("updateAllData", this.onUpdateAllData.bind(this, socket) );
 
   // remove client connection
   socket.on('disconnect', function(socketId) {
@@ -91,20 +92,37 @@ ServerHost.prototype.onRequestData = function(socket){
   }
 };
 
-// receive new data and share it with all clients who are seeing the same project
-ServerHost.prototype.onUpdateData = function(socket, data){
+ServerHost.prototype.onAddNewNode = function(socket, x, y, title){
   var prjId = this.socket2prjId[socket.id];
   var prj   = this.projects[prjId];
   if (prj){
-    prj.updateData(data);
-    console.log("message from input #" + socket, data);
+    prj.addNewNode(x, y, title);
+    this.sync(prjId);
+  }
+
+};
+
+// receive new data
+ServerHost.prototype.onUpdateAllData = function(socket, data){
+  var prjId = this.socket2prjId[socket.id];
+  var prj   = this.projects[prjId];
+  if (prj){
+    prj.updateAllData(data);
+    console.log("message from input #" + socket.id, data);
+
+    this.sync(prjId);
+  }
+};
+
+//share data with all clients who are seeing the same project
+ServerHost.prototype.sync = function(prjId){
+  var prj   = this.projects[prjId];
+  if (prj){
     for (var sid in this.socket2prjId){
-      // console.log(sid, socket.id, prjId, this.socket2prjId[sid]);
-      if (sid != socket.id && prjId == this.socket2prjId[sid]){
+      if (prjId == this.socket2prjId[sid]){
         console.log("sync to socket:", sid);
         this.io.sockets.to(sid).emit("data", prj.getData());
       }
     }
   }
-
 };

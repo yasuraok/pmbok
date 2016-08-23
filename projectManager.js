@@ -43,15 +43,9 @@ ProjectManager.prototype.openPrject = function(prjId){
   if (fs.existsSync(filePath)) {
     // 設定情報を読み込み
     var buf = fs.readFileSync(filePath, "utf-8");
-    try{
-      var onUpdate = this.storePrj.bind(this, prjId); // store when update
-      var data     = JSON.parse(buf);
-      return new project.Project(onUpdate, data);
-    }
-    catch (e) {
-      return undefined;
-      // no process
-    }
+    var onUpdate = this.storePrj.bind(this, prjId); // store when update
+    var data     = JSON.parse(buf);
+    return new project.Project(onUpdate, data);
   }
   return undefined;
 }

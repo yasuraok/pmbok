@@ -1,9 +1,6 @@
 "use strict";
 
 // TODO add user settings
-var consts = {
-  defaultTitle: "random variable"
-};
 var settings = {
   appendElSpec: "#graph"
 };
@@ -11,9 +8,10 @@ var settings = {
 /**** MAIN ****/
 var GraphCreator = function(
   d3,
-  saveAs,
+  saveAs,           // set window.saveAs
   Blob,
-  onUpdate
+  onRequestNewNode, // (x, y, title) handler for adding new node
+  onUpdate          // ({nodes:, edges:}) handler for updating records
 ){
   var size  = calcSize();
 
@@ -23,11 +21,11 @@ var GraphCreator = function(
         .attr("height", size.h);
 
   var thisGraph = this;
-      thisGraph.idct = 0;
 
   thisGraph.nodes = [];
   thisGraph.edges = [];
-  thisGraph.onUpdate = onUpdate;
+  thisGraph.onRequestNewNode = onRequestNewNode;
+  thisGraph.onUpdate         = onUpdate;
 
   thisGraph.state = {
     selectedNode: null,
@@ -175,10 +173,6 @@ var GraphCreator = function(
   });
 };
 
-GraphCreator.prototype.setIdCt = function(idct){
-  this.idct = idct;
-};
-
 GraphCreator.prototype.consts =  {
   selectedClass: "selected",
   connectClass: "connect-node",
@@ -206,7 +200,6 @@ GraphCreator.prototype.loads = function(jsonObj){
   var thisGraph = this;
   thisGraph.deleteGraph(true);
   thisGraph.nodes = jsonObj.nodes;
-  thisGraph.setIdCt(jsonObj.nodes.length + 1);
   var newEdges = jsonObj.edges;
   newEdges.forEach(function(e, i){
     newEdges[i] = {source: thisGraph.nodes.filter(function(n){return n.id == e.source;})[0],
@@ -464,18 +457,16 @@ GraphCreator.prototype.svgMouseUp = function(){
     // dragged not clicked
     state.justScaleTransGraph = false;
   } else if (state.graphMouseDown && d3.event.shiftKey){
-    // clicked not dragged from svg
-    var xycoords = d3.mouse(thisGraph.svgG.node()),
-        d = {id: thisGraph.idct++, title: consts.defaultTitle, x: xycoords[0], y: xycoords[1]};
-    thisGraph.nodes.push(d);
-    thisGraph.updateGraph(true);
-    // make title of text immediently editable
-    var d3txt = thisGraph.changeTextOfNode(thisGraph.circles.filter(function(dval){
-      return dval.id === d.id;
-    }), d),
-        txtNode = d3txt.node();
-    thisGraph.selectElementContents(txtNode);
-    txtNode.focus();
+    // clicked not dragged from svg -> new node
+    var xycoords = d3.mouse(thisGraph.svgG.node());
+    thisGraph.onRequestNewNode(xycoords[0], xycoords[1]);
+    // // make title of text immediently editable
+    // var d3txt = thisGraph.changeTextOfNode(thisGraph.circles.filter(function(dval){
+    //   return dval.id === d.id;
+    // }), d),
+    //     txtNode = d3txt.node();
+    // thisGraph.selectElementContents(txtNode);
+    // txtNode.focus();
   } else if (state.shiftNodeDrag){
     // dragged from node
     state.shiftNodeDrag = false;

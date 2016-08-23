@@ -9,8 +9,17 @@ var Ctrl = function(){
 
   // initialize graph view
   this.graph = new GraphCreator(
-    window.d3, window.saveAs, window.Blob,
-    this.sendToServer.bind(this)
+    window.d3,
+    window.saveAs,
+    window.Blob,
+
+    function(x, y, title){
+      this.socket.emit("addNewNode", x, y, title);
+    }.bind(this),
+
+    function(obj        ){
+      this.socket.emit("updateAllData", obj     );
+    }.bind(this)
   );
 
   // request project list
@@ -50,9 +59,4 @@ Ctrl.prototype.onGetData = function(obj){
 // =============================================================================
 Ctrl.prototype.openProject = function(projectId){
   this.socket.emit("openProject", projectId);
-}
-
-Ctrl.prototype.sendToServer = function(obj){
-  console.log("update");
-  this.socket.emit("updateData", obj);
 }
