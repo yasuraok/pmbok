@@ -67,6 +67,16 @@ g.conceptG:hover circle{
     fill: rgb(200, 238, 241);
 }
 
+g.progress0 circle{
+    fill: rgb(255, 255, 255);
+}
+g.progress1 circle{
+    fill: rgb(250, 232, 255);
+}
+g.progress2 circle{
+    fill: rgb(210, 210, 210);
+}
+
 g.selected circle{
     fill: rgb(250, 232, 255);
 }

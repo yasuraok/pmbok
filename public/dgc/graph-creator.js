@@ -549,15 +549,40 @@ GraphCreator.prototype.updateGraph = function(updateData){
   paths.exit().remove();
 
   // update existing nodes
-  thisGraph.circles = thisGraph.circles.data(thisGraph.nodes, function(d){ return d.id;});
-  thisGraph.circles.attr("transform", function(d){return "translate(" + d.x + "," + d.y + ")";});
+  thisGraph.circles = thisGraph.circles.data(thisGraph.nodes, function(d){
+    return d.id;
+  });
+  thisGraph.circles
+    .classed("progress0", function(d){
+      return d.progress == 0;
+    })
+    .classed("progress1", function(d){
+      return d.progress == 1;
+    })
+    .classed("progress2", function(d){
+      return d.progress == 2;
+    })
+    .attr("transform", function(d){
+      return "translate(" + d.x + "," + d.y + ")";
+    });
 
   // add new nodes
-  var newGs= thisGraph.circles.enter()
-        .append("g");
+  var newGs = thisGraph.circles.enter().append("g");
 
-  newGs.classed(consts.circleGClass, true)
-    .attr("transform", function(d){return "translate(" + d.x + "," + d.y + ")";})
+  newGs
+    .classed(consts.circleGClass, true)
+    .classed("progress0", function(d){
+      return d.progress == 0;
+    })
+    .classed("progress1", function(d){
+      return d.progress == 1;
+    })
+    .classed("progress2", function(d){
+      return d.progress == 2;
+    })
+    .attr("transform", function(d){
+      return "translate(" + d.x + "," + d.y + ")";
+    })
     .on("mouseover", function(d){
       if (state.shiftNodeDrag){
         d3.select(this).classed(consts.connectClass, true);
