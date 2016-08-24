@@ -7,7 +7,24 @@ var Ctrl = function(){
   this.socket = io.connect(/*'http://localhost:8080'*/);
   this.setSocketAPI();
 
-  // initialize graph view
+  // initialized after receive "init" message from sever
+  this.graph   = undefined;
+  this.setting = undefined;
+
+  // request project list
+  // this.socket.emit("requestProjects");
+}
+
+// =============================================================================
+Ctrl.prototype.setSocketAPI = function(){
+  this.socket.on("init",     this.onInit      .bind(this));
+  this.socket.on("projects", this.onGetPrjList.bind(this));
+  this.socket.on("data",     this.onGetData   .bind(this));
+}
+
+Ctrl.prototype.onInit = function(setting, prjList){
+  this.setting = setting;
+
   this.graph = new GraphCreator(
     window.d3,
     window.saveAs,
@@ -22,14 +39,7 @@ var Ctrl = function(){
     }.bind(this)
   );
 
-  // request project list
-  this.socket.emit("requestProjects");
-}
-
-// =============================================================================
-Ctrl.prototype.setSocketAPI = function(){
-  this.socket.on("projects", this.onGetPrjList.bind(this));
-  this.socket.on("data",     this.onGetData   .bind(this));
+  this.onGetPrjList(prjList);
 }
 
 Ctrl.prototype.onGetPrjList = function(prjList){

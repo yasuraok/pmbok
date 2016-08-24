@@ -3,6 +3,7 @@ module.exports = {
 }
 
 var projectManager = require('./projectManager');
+var setting        = require('./setting');
 var os          = require("os");
 var http        = require('http');
 var connect     = require('connect');
@@ -61,11 +62,14 @@ ServerHost.prototype.onConnection = function(socket){
   socket.on("addNewNode",    this.onAddNewNode   .bind(this, socket) );
   socket.on("updateAllData", this.onUpdateAllData.bind(this, socket) );
 
-  // remove client connection
+  // remove client connection when disconnect
   socket.on('disconnect', function(socketId) {
     delete this.socket2prjId[socketId];
     console.log("disconnect: ", this.socket2prjId);
   }.bind(this, socket.id));
+
+  // send init configuration
+  socket.emit("init", setting.setting, this.projectManager.getPrjList());
 };
 
 // send current project list
