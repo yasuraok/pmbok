@@ -10,16 +10,20 @@
     <script src="//cdn.jsdelivr.net/filesaver.js/0.1/FileSaver.min.js"></script>
 
     <script src="dgc/graph-creator.js"></script>
-    <script src="socket_client.js"></script>
+    <script src="dispatcher.js"></script>
 
     <script type="text/javascript">
       "use strict";
 
-      function showStatusPopup(visible, fields){
+      function EditView(nameChanged, progressChanged){
+        this.nameChanged     = nameChanged;
+        this.progressChanged = progressChanged;
+      };
+
+      EditView.prototype.showStatusPopup = function(visible, fields, setting){
         // fields = [
         //   {
         //     field: "name",
-        //     onChange: function(val){},
         //     orig: "abc"
         //   }
         // ]
@@ -34,21 +38,21 @@
               var text = document.createTextNode(f.orig);
               var ta   = document.createElement('textarea');
               ta.addEventListener('change', function(f, ta, e){
-                f.onChange(ta.value);
+                this.nameChanged(ta.value);
               }.bind(this, f, ta));
               ta.appendChild(text);
               form.appendChild(ta);
             }
 
             if(f.field == "progress"){
-              for(var j in ctrl.setting.progress){
-                var text  = ctrl.setting.progress[j];
+              for(var j in setting.progress){
+                var text  = setting.progress[j];
                 var radio = document.createElement('input');
                 radio.type  = 'radio';
                 radio.name  = 'progress';
                 radio.value = j;
                 radio.addEventListener('change', function(f, radio, e){
-                  f.onChange(radio.value);
+                  this.progressChanged(radio.value);
                 }.bind(this, f, radio))
                 if (j == f.orig) radio.checked = true;
 
@@ -63,26 +67,10 @@
         } else {
           elmt.style.display = "none";
         }
-      }
+      };
 
-      function test(){
-        showStatusPopup(true,[
-            {
-              field: "name",
-              onChange: function(val){ console.log("name", val); },
-              orig: "abc"
-            },
-            {
-              field: "progress",
-              onChange: function(val){ console.log("radio", val); },
-              orig: 1
-            }
-        ]);
-      }
-
-      var ctrl = undefined;
       window.onload = function(){
-        ctrl = new Ctrl();
+        var dispatcher = new Dispatcher();
       }
 
     </script>
@@ -111,8 +99,8 @@
           <!-- <input type="image" id="upload-input"   title="upload graph"   src="/dgc/upload-icon.png"   alt="upload graph"> -->
           <input type="image" id="download-input" title="download graph" src="/dgc/download-icon.png" alt="download graph">
           <!-- <input type="image" id="delete-graph"   title="delete graph"   src="/dgc/trash-icon.png"    alt="delete graph"> -->
-          <a href="javascript:test()">debug menu open</a>
-          <a href="javascript:showStatusPopup(false)">debug menu close</a>
+          <a id="edit_debug_open"  href="#">debug menu open</a>
+          <a id="edit_debug_close" href="#">debug menu close</a>
         </div>
 
         <div id="graph">
