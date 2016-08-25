@@ -36,18 +36,18 @@ var Dispatcher = function(){
 }
 
 Dispatcher.prototype.debug = function(){
-  document.getElementById('edit_debug_open')
-    .addEventListener("click", function(){
-      this.editView.showStatusPopup(true,[
-        { field: "name",     orig: "abc"},
-        { field: "progress", orig: 1}
-      ], this.setting);
-    }.bind(this));
-
-  document.getElementById('edit_debug_close')
-    .addEventListener("click", function(){
-      this.editView.showStatusPopup(false);
-    }.bind(this));
+  // document.getElementById('edit_debug_open')
+  //   .addEventListener("click", function(){
+  //     this.editView.showStatusPopup(true,[
+  //       { field: "name",     orig: "abc"},
+  //       { field: "progress", orig: 1}
+  //     ], this.setting);
+  //   }.bind(this));
+  //
+  // document.getElementById('edit_debug_close')
+  //   .addEventListener("click", function(){
+  //     this.editView.showStatusPopup(false);
+  //   }.bind(this));
 }
 
 // =============================================================================
