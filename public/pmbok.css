@@ -26,9 +26,9 @@ div.child2 {
 div.popup {
   display: none;  /* switched to "block" by script */
   position: absolute; /* looks like popup */
-  left: 50%;
+  left: 60%;
   top : 17%;
-  margin-left: -202px;
+  margin-left: 0px;
 
   max-width:300px;
   min-width:250px;

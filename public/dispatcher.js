@@ -5,7 +5,8 @@
 // 必要に応じて状態変更ではweb socketサーバーと通信する。
 // サーバー側にあるデータを受信する、ブラウザ上のGUI操作に合わせてサーバーデータを更新する etc.
 var Dispatcher = function(){
-  this.setting  = undefined; // initialized after receive "init" from sever
+  this.obj = {}; // all server data
+  this.setting = undefined; // initialized after receive "init" from sever
 
   // initialize socket
   this.socket = io.connect(/*'http://localhost:8080'*/);
@@ -21,7 +22,8 @@ var Dispatcher = function(){
 
     // set graph View APIs
     this.onAddNewNode   .bind(this),
-    this.onUpdateAllData.bind(this)
+    this.onUpdateAllData.bind(this),
+    this.onNodeSelected .bind(this)
   );
 
   // initialize edit view
@@ -56,12 +58,26 @@ Dispatcher.prototype.onInit = function(setting, prjList){
 }
 
 // =============================================================================
-Dispatcher.prototype.onNameChanged = function(name){
-  console.log("name", name);
+Dispatcher.prototype.onNameChanged = function(id, name){
+  console.log(id, "name", name);
+  for(var i in this.obj.nodes){
+    if(this.obj.nodes[i].id == id){
+      this.obj.nodes[i]["title"] = name;
+      break;
+    }
+  }
+  this.socket.emit("updateAllData", this.obj);
 }
 
-Dispatcher.prototype.onProgressChanged = function(progress){
-  console.log("progress", progress);
+Dispatcher.prototype.onProgressChanged = function(id, progress){
+  console.log(id, "progress", progress);
+  for(var i in this.obj.nodes){
+    if(this.obj.nodes[i].id == id){
+      this.obj.nodes[i]["progress"] = progress;
+      break;
+    }
+  }
+  this.socket.emit("updateAllData", this.obj);
 }
 
 Dispatcher.prototype.onAddNewNode = function(x, y, title){
@@ -71,7 +87,15 @@ Dispatcher.prototype.onAddNewNode = function(x, y, title){
 
 Dispatcher.prototype.onUpdateAllData = function(obj){
   // directly send to server
-  this.socket.emit("updateAllData", obj     );
+  this.socket.emit("updateAllData", obj);
+}
+
+Dispatcher.prototype.onNodeSelected = function(selected, id, fields){
+  if(selected){
+    this.editView.showStatusPopup(true, id, fields, this.setting);
+  }else{
+    this.editView.showStatusPopup(false);
+  }
 }
 
 Dispatcher.prototype.onGetPrjList = function(prjList){
@@ -95,6 +119,8 @@ Dispatcher.prototype.onGetPrjList = function(prjList){
 }
 
 Dispatcher.prototype.onGetData = function(obj){
+  this.obj = obj;
+  // console.log(obj);
   this.graph.loads(obj);
 }
 

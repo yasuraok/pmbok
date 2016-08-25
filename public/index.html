@@ -20,7 +20,7 @@
         this.progressChanged = progressChanged;
       };
 
-      EditView.prototype.showStatusPopup = function(visible, fields, setting){
+      EditView.prototype.showStatusPopup = function(visible, id, fields, setting){
         // fields = [
         //   {
         //     field: "name",
@@ -38,7 +38,7 @@
               var text = document.createTextNode(f.orig);
               var ta   = document.createElement('textarea');
               ta.addEventListener('change', function(f, ta, e){
-                this.nameChanged(ta.value);
+                this.nameChanged(id, ta.value);
               }.bind(this, f, ta));
               ta.appendChild(text);
               form.appendChild(ta);
@@ -52,7 +52,7 @@
                 radio.name  = 'progress';
                 radio.value = j;
                 radio.addEventListener('change', function(f, radio, e){
-                  this.progressChanged(radio.value);
+                  this.progressChanged(id, radio.value);
                 }.bind(this, f, radio))
                 if (j == f.orig) radio.checked = true;
 
