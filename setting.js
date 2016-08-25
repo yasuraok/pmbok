@@ -3,6 +3,6 @@
 module.exports = {
   setting: {
     // 進捗ステータスの数値=>表示名対応
-    "progress": ["Yet", "InProgress", "End"]
+    "progress": ["yet", "in progress", "end"]
   }
 }

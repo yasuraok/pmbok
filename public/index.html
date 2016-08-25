@@ -1,8 +1,9 @@
 <!DOCTYPE HTML>
 <html>
   <head>
-    <link rel="stylesheet" href="/dgc/graph-creator.css" />
+    <link rel="stylesheet" href="reset.css" />
     <link rel="stylesheet" href="pmbok.css" />
+    <link rel="stylesheet" href="/dgc/graph-creator.css" />
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="//d3js.org/d3.v3.js" charset="utf-8"></script>
@@ -14,9 +15,76 @@
     <script type="text/javascript">
       "use strict";
 
-      window.onload = function(){
-        var ctrl = new Ctrl();
+      function showStatusPopup(visible, fields){
+        // fields = [
+        //   {
+        //     field: "name",
+        //     onChange: function(val){},
+        //     orig: "abc"
+        //   }
+        // ]
+        var elmt = document.getElementById('status');
+        var form = document.getElementById('status_form');
+        form.innerHTML = "";
+
+        if(visible){
+          for (var i in fields){
+            var f = fields[i];
+            if(f.field == "name"){
+              var text = document.createTextNode(f.orig);
+              var ta   = document.createElement('textarea');
+              ta.addEventListener('change', function(f, ta, e){
+                f.onChange(ta.value);
+              }.bind(this, f, ta));
+              ta.appendChild(text);
+              form.appendChild(ta);
+            }
+
+            if(f.field == "progress"){
+              for(var j in ctrl.setting.progress){
+                var text  = ctrl.setting.progress[j];
+                var radio = document.createElement('input');
+                radio.type  = 'radio';
+                radio.name  = 'progress';
+                radio.value = j;
+                radio.addEventListener('change', function(f, radio, e){
+                  f.onChange(radio.value);
+                }.bind(this, f, radio))
+                if (j == f.orig) radio.checked = true;
+
+                form.appendChild(radio);
+                form.appendChild(document.createTextNode(text + " "));
+              }
+            }
+            form.appendChild(document.createElement('br'));
+          }
+
+          elmt.style.display = "block";
+        } else {
+          elmt.style.display = "none";
+        }
       }
+
+      function test(){
+        showStatusPopup(true,[
+            {
+              field: "name",
+              onChange: function(val){ console.log("name", val); },
+              orig: "abc"
+            },
+            {
+              field: "progress",
+              onChange: function(val){ console.log("radio", val); },
+              orig: 1
+            }
+        ]);
+      }
+
+      var ctrl = undefined;
+      window.onload = function(){
+        ctrl = new Ctrl();
+      }
+
     </script>
   </head>
 
@@ -29,14 +97,28 @@
       </div>
       <div class="child2">
         <h1 id="title"> title </h1>
-        <div id="graph">
-          <div id="toolbox">
-            <input type="file" id="hidden-file-upload">
-            <!-- <input type="image" id="upload-input"   title="upload graph"   src="/dgc/upload-icon.png"   alt="upload graph"> -->
-            <input type="image" id="download-input" title="download graph" src="/dgc/download-icon.png" alt="download graph">
-            <!-- <input type="image" id="delete-graph"   title="delete graph"   src="/dgc/trash-icon.png"    alt="delete graph"> -->
+
+        <!-- Popup -->
+        <div id="status" class="popup">
+          <h2>Edit</h2>
+          <hr>
+          <div id="status_form">
           </div>
         </div>
+
+        <div id="toolbox">
+          <input type="file" id="hidden-file-upload">
+          <!-- <input type="image" id="upload-input"   title="upload graph"   src="/dgc/upload-icon.png"   alt="upload graph"> -->
+          <input type="image" id="download-input" title="download graph" src="/dgc/download-icon.png" alt="download graph">
+          <!-- <input type="image" id="delete-graph"   title="delete graph"   src="/dgc/trash-icon.png"    alt="delete graph"> -->
+          <a href="javascript:test()">debug menu open</a>
+          <a href="javascript:showStatusPopup(false)">debug menu close</a>
+        </div>
+
+        <div id="graph">
+        </div>
+
+
       </div>
     </div>
   </body>
