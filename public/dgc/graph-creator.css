@@ -36,7 +36,7 @@ marker{
 }
 
 g.conceptG circle{
-    fill: #F6FBFF;
+    fill: rgb(245, 251, 255);
     stroke: #333;
     stroke-width: 2px;
 }
@@ -46,7 +46,7 @@ g.conceptG:hover circle{
 }
 
 g.progress0 circle{
-    fill: rgb(255, 255, 255);
+    fill: rgb(245, 251, 255);
 }
 g.progress1 circle{
     fill: rgb(255, 255, 224);
