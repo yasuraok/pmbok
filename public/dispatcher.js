@@ -59,25 +59,27 @@ Dispatcher.prototype.onInit = function(setting, prjList){
 
 // =============================================================================
 Dispatcher.prototype.onNameChanged = function(id, name){
-  console.log(id, "name", name);
   for(var i in this.obj.nodes){
-    if(this.obj.nodes[i].id == id){
-      this.obj.nodes[i]["title"] = name;
-      break;
+    var node = this.obj.nodes[i];
+    if(node.id == id && node["title"] != name){
+      console.log(id, "name", name);
+      node["title"] = name;
+      this.socket.emit("updateAllData", this.obj);
+      return;
     }
   }
-  this.socket.emit("updateAllData", this.obj);
 }
 
 Dispatcher.prototype.onProgressChanged = function(id, progress){
-  console.log(id, "progress", progress);
   for(var i in this.obj.nodes){
-    if(this.obj.nodes[i].id == id){
-      this.obj.nodes[i]["progress"] = progress;
-      break;
+    var node = this.obj.nodes[i];
+    if(node.id == id && node["progress"] != progress){
+      console.log(id, "progress", progress);
+      node["progress"] = progress;
+      this.socket.emit("updateAllData", this.obj);
+      return;
     }
   }
-  this.socket.emit("updateAllData", this.obj);
 }
 
 Dispatcher.prototype.onAddNewNode = function(x, y, title){

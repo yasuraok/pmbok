@@ -18,6 +18,8 @@
       function EditView(nameChanged, progressChanged){
         this.nameChanged     = nameChanged;
         this.progressChanged = progressChanged;
+
+        this.onClose = undefined;
       };
 
       EditView.prototype.showStatusPopup = function(visible, id, fields, setting){
@@ -37,9 +39,15 @@
             if(f.field == "name"){
               var text = document.createTextNode(f.orig);
               var ta   = document.createElement('textarea');
-              ta.addEventListener('change', function(f, ta, e){
+              ta.addEventListener('change', function(ta, e){
                 this.nameChanged(id, ta.value);
-              }.bind(this, f, ta));
+              }.bind(this, ta));
+              // (firefox) Change event does not occur
+              // in case focus off by setting style.display = none.
+              // Adding manual onclose function simulates the change event.
+              this.onClose = function(ta){
+                this.nameChanged(id, ta.value);
+              }.bind(this, ta);
               ta.appendChild(text);
               form.appendChild(ta);
             }
@@ -51,9 +59,9 @@
                 radio.type  = 'radio';
                 radio.name  = 'progress';
                 radio.value = j;
-                radio.addEventListener('change', function(f, radio, e){
+                radio.addEventListener('change', function(radio, e){
                   this.progressChanged(id, radio.value);
-                }.bind(this, f, radio))
+                }.bind(this, radio))
                 if (j == f.orig) radio.checked = true;
 
                 form.appendChild(radio);
@@ -65,6 +73,7 @@
 
           elmt.style.display = "block";
         } else {
+          this.onClose();
           elmt.style.display = "none";
         }
       };
