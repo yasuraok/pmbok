@@ -1,22 +1,87 @@
 <!DOCTYPE HTML>
 <html>
   <head>
-    <link rel="stylesheet" href="/dgc/graph-creator.css" />
+    <link rel="stylesheet" href="reset.css" />
     <link rel="stylesheet" href="pmbok.css" />
+    <link rel="stylesheet" href="/dgc/graph-creator.css" />
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="//d3js.org/d3.v3.js" charset="utf-8"></script>
     <script src="//cdn.jsdelivr.net/filesaver.js/0.1/FileSaver.min.js"></script>
 
     <script src="dgc/graph-creator.js"></script>
-    <script src="socket_client.js"></script>
+    <script src="dispatcher.js"></script>
 
     <script type="text/javascript">
       "use strict";
 
+      function EditView(nameChanged, progressChanged){
+        this.nameChanged     = nameChanged;
+        this.progressChanged = progressChanged;
+
+        this.onClose = undefined;
+      };
+
+      EditView.prototype.showStatusPopup = function(visible, id, fields, setting){
+        // fields = [
+        //   {
+        //     field: "name",
+        //     orig: "abc"
+        //   }
+        // ]
+        var elmt = document.getElementById('status');
+        var form = document.getElementById('status_form');
+        form.innerHTML = "";
+
+        if(visible){
+          for (var i in fields){
+            var f = fields[i];
+            if(f.field == "name"){
+              var text = document.createTextNode(f.orig);
+              var ta   = document.createElement('textarea');
+              ta.addEventListener('change', function(ta, e){
+                this.nameChanged(id, ta.value);
+              }.bind(this, ta));
+              // (firefox) Change event does not occur
+              // in case focus off by setting style.display = none.
+              // Adding manual onclose function simulates the change event.
+              this.onClose = function(ta){
+                this.nameChanged(id, ta.value);
+              }.bind(this, ta);
+              ta.appendChild(text);
+              form.appendChild(ta);
+            }
+
+            if(f.field == "progress"){
+              for(var j in setting.progress){
+                var text  = setting.progress[j];
+                var radio = document.createElement('input');
+                radio.type  = 'radio';
+                radio.name  = 'progress';
+                radio.value = j;
+                radio.addEventListener('change', function(radio, e){
+                  this.progressChanged(id, radio.value);
+                }.bind(this, radio))
+                if (j == f.orig) radio.checked = true;
+
+                form.appendChild(radio);
+                form.appendChild(document.createTextNode(text + " "));
+              }
+            }
+            form.appendChild(document.createElement('br'));
+          }
+
+          elmt.style.display = "block";
+        } else {
+          this.onClose();
+          elmt.style.display = "none";
+        }
+      };
+
       window.onload = function(){
-        var ctrl = new Ctrl();
+        var dispatcher = new Dispatcher();
       }
+
     </script>
   </head>
 
@@ -29,14 +94,28 @@
       </div>
       <div class="child2">
         <h1 id="title"> title </h1>
-        <div id="graph">
-          <div id="toolbox">
-            <input type="file" id="hidden-file-upload">
-            <!-- <input type="image" id="upload-input"   title="upload graph"   src="/dgc/upload-icon.png"   alt="upload graph"> -->
-            <input type="image" id="download-input" title="download graph" src="/dgc/download-icon.png" alt="download graph">
-            <!-- <input type="image" id="delete-graph"   title="delete graph"   src="/dgc/trash-icon.png"    alt="delete graph"> -->
+
+        <!-- Popup -->
+        <div id="status" class="popup">
+          <h2>Edit</h2>
+          <hr>
+          <div id="status_form">
           </div>
         </div>
+
+        <div id="toolbox">
+          <input type="file" id="hidden-file-upload">
+          <!-- <input type="image" id="upload-input"   title="upload graph"   src="/dgc/upload-icon.png"   alt="upload graph"> -->
+          <input type="image" id="download-input" title="download graph" src="/dgc/download-icon.png" alt="download graph">
+          <!-- <input type="image" id="delete-graph"   title="delete graph"   src="/dgc/trash-icon.png"    alt="delete graph"> -->
+          <!-- <a id="edit_debug_open"  href="#">debug menu open</a>
+          <a id="edit_debug_close" href="#">debug menu close</a> -->
+        </div>
+
+        <div id="graph">
+        </div>
+
+
       </div>
     </div>
   </body>

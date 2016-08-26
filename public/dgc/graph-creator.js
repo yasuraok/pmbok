@@ -5,13 +5,19 @@ var settings = {
   appendElSpec: "#graph"
 };
 
+function deepcopy(obj){
+  // FIXME
+  return JSON.parse(JSON.stringify(obj));
+}
+
 /**** MAIN ****/
 var GraphCreator = function(
   d3,
   saveAs,           // set window.saveAs
   Blob,
   onRequestNewNode, // (x, y, title) handler for adding new node
-  onUpdate          // ({nodes:, edges:}) handler for updating records
+  onUpdate,         // ({nodes:, edges:}) handler for updating records
+  onNodeSelected    // (selected, fields)
 ){
   var size  = calcSize();
 
@@ -26,6 +32,7 @@ var GraphCreator = function(
   thisGraph.edges = [];
   thisGraph.onRequestNewNode = onRequestNewNode;
   thisGraph.onUpdate         = onUpdate;
+  thisGraph.onNodeSelected   = onNodeSelected;
 
   thisGraph.state = {
     selectedNode: null,
@@ -90,11 +97,18 @@ var GraphCreator = function(
         });
 
   // listen for key events
+  var body = document.getElementsByTagName('body')[0];
   d3.select(window).on("keydown", function(){
-    thisGraph.svgKeyDown.call(thisGraph);
+    // enable only no focus
+    if(! document.activeElement || document.activeElement == body){
+      thisGraph.svgKeyDown.call(thisGraph);
+    }
   });
   d3.select(window).on("keyup", function(){
-    thisGraph.svgKeyUp.call(thisGraph);
+    // enable only no focus
+    if(! document.activeElement || document.activeElement == body){
+      thisGraph.svgKeyUp.call(thisGraph);
+    }
   });
   svg.on("mousedown", function(d){
     thisGraph.svgMouseDown.call(thisGraph, d);
@@ -200,7 +214,7 @@ GraphCreator.prototype.loads = function(jsonObj){
   var thisGraph = this;
   thisGraph.deleteGraph(true);
   thisGraph.nodes = jsonObj.nodes;
-  var newEdges = jsonObj.edges;
+  var newEdges = deepcopy(jsonObj.edges);
   newEdges.forEach(function(e, i){
     newEdges[i] = {source: thisGraph.nodes.filter(function(n){return n.id == e.source;})[0],
                 target: thisGraph.nodes.filter(function(n){return n.id == e.target;})[0]};
@@ -286,22 +300,36 @@ GraphCreator.prototype.replaceSelectNode = function(d3Node, nodeData){
     thisGraph.removeSelectFromNode();
   }
   thisGraph.state.selectedNode = nodeData;
+
+  // notify selected
+  var fields = [{field: "name",     orig: nodeData.title   },
+                {field: "progress", orig: nodeData.progress}];
+  thisGraph.onNodeSelected(true, nodeData.id, fields);
 };
 
 GraphCreator.prototype.removeSelectFromNode = function(){
   var thisGraph = this;
-  thisGraph.circles.filter(function(cd){
-    return cd.id === thisGraph.state.selectedNode.id;
-  }).classed(thisGraph.consts.selectedClass, false);
-  thisGraph.state.selectedNode = null;
+
+  if(thisGraph.state.selectedNode){
+    thisGraph.circles.filter(function(cd){
+      return cd.id === thisGraph.state.selectedNode.id;
+    }).classed(thisGraph.consts.selectedClass, false);
+    thisGraph.state.selectedNode = null;
+
+    // notigy unselected
+    thisGraph.onNodeSelected(false);
+  }
 };
 
 GraphCreator.prototype.removeSelectFromEdge = function(){
   var thisGraph = this;
-  thisGraph.paths.filter(function(cd){
-    return cd === thisGraph.state.selectedEdge;
-  }).classed(thisGraph.consts.selectedClass, false);
-  thisGraph.state.selectedEdge = null;
+
+  if(thisGraph.state.selectedEdge){
+    thisGraph.paths.filter(function(cd){
+      return cd === thisGraph.state.selectedEdge;
+    }).classed(thisGraph.consts.selectedClass, false);
+    thisGraph.state.selectedEdge = null;
+  }
 };
 
 GraphCreator.prototype.pathMouseDown = function(d3path, d){
@@ -382,8 +410,6 @@ GraphCreator.prototype.circleMouseUp = function(d3node, d){
   var thisGraph = this,
       state = thisGraph.state,
       consts = thisGraph.consts;
-  // reset the states
-  state.shiftNodeDrag = false;
   d3node.classed(consts.connectClass, false);
 
   var mouseDownNode = state.mouseDownNode;
@@ -392,7 +418,7 @@ GraphCreator.prototype.circleMouseUp = function(d3node, d){
 
   thisGraph.dragLine.classed("hidden", true);
 
-  if (mouseDownNode !== d){
+  if (state.shiftNodeDrag && mouseDownNode !== d){
     // we're in a different node: create new edge for mousedown edge and add to graph
     thisGraph.addEdge(mouseDownNode, d);
 
@@ -406,10 +432,10 @@ GraphCreator.prototype.circleMouseUp = function(d3node, d){
       // clicked, not dragged
       if (d3.event.shiftKey){
         // shift-clicked node: edit text content
-        var d3txt = thisGraph.changeTextOfNode(d3node, d);
-        var txtNode = d3txt.node();
-        thisGraph.selectElementContents(txtNode);
-        txtNode.focus();
+        // var d3txt = thisGraph.changeTextOfNode(d3node, d);
+        // var txtNode = d3txt.node();
+        // thisGraph.selectElementContents(txtNode);
+        // txtNode.focus();
       } else{
         if (state.selectedEdge){
           thisGraph.removeSelectFromEdge();
@@ -424,7 +450,10 @@ GraphCreator.prototype.circleMouseUp = function(d3node, d){
       }
     }
   }
+  // reset the states
   state.mouseDownNode = null;
+  state.shiftNodeDrag = false;
+
   return;
 
 }; // end of circles mouseup
@@ -447,6 +476,10 @@ GraphCreator.prototype.addEdge = function(mouseDownNode, d){
 // mousedown on main svg
 GraphCreator.prototype.svgMouseDown = function(){
   this.state.graphMouseDown = true;
+
+  // unselect all
+  this.removeSelectFromNode();
+  this.removeSelectFromEdge();
 };
 
 // mouseup on main svg
@@ -494,11 +527,11 @@ GraphCreator.prototype.svgKeyDown = function() {
     if (selectedNode){
       thisGraph.nodes.splice(thisGraph.nodes.indexOf(selectedNode), 1);
       thisGraph.spliceLinksForNode(selectedNode);
-      state.selectedNode = null;
+      this.removeSelectFromNode();
       thisGraph.updateGraph(true);
     } else if (selectedEdge){
       thisGraph.edges.splice(thisGraph.edges.indexOf(selectedEdge), 1);
-      state.selectedEdge = null;
+      this.removeSelectFromEdge();
       thisGraph.updateGraph(true);
     }
     break;
@@ -549,15 +582,40 @@ GraphCreator.prototype.updateGraph = function(updateData){
   paths.exit().remove();
 
   // update existing nodes
-  thisGraph.circles = thisGraph.circles.data(thisGraph.nodes, function(d){ return d.id;});
-  thisGraph.circles.attr("transform", function(d){return "translate(" + d.x + "," + d.y + ")";});
+  thisGraph.circles = thisGraph.circles.data(thisGraph.nodes, function(d){
+    return d.id;
+  });
+  thisGraph.circles
+    .classed("progress0", function(d){
+      return d.progress == 0;
+    })
+    .classed("progress1", function(d){
+      return d.progress == 1;
+    })
+    .classed("progress2", function(d){
+      return d.progress == 2;
+    })
+    .attr("transform", function(d){
+      return "translate(" + d.x + "," + d.y + ")";
+    });
 
   // add new nodes
-  var newGs= thisGraph.circles.enter()
-        .append("g");
+  var newGs = thisGraph.circles.enter().append("g");
 
-  newGs.classed(consts.circleGClass, true)
-    .attr("transform", function(d){return "translate(" + d.x + "," + d.y + ")";})
+  newGs
+    .classed(consts.circleGClass, true)
+    .classed("progress0", function(d){
+      return d.progress == 0;
+    })
+    .classed("progress1", function(d){
+      return d.progress == 1;
+    })
+    .classed("progress2", function(d){
+      return d.progress == 2;
+    })
+    .attr("transform", function(d){
+      return "translate(" + d.x + "," + d.y + ")";
+    })
     .on("mouseover", function(d){
       if (state.shiftNodeDrag){
         d3.select(this).classed(consts.connectClass, true);

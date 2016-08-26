@@ -25,10 +25,11 @@ Project.prototype.getData = function(){
 // in order to set unique id, this operation must be done at server-side
 Project.prototype.addNewNode = function(x, y, title){
   var node = {
-    id   : this.idCount++,
-    title: title || consts.defaultTitle,
-    x    : x,
-    y    : y
+    id      : this.idCount++,
+    progress: 0,
+    title   : title || consts.defaultTitle,
+    x       : x,
+    y       : y
   };
   this.data.nodes.push(node);
   this.onUpdate(this.data); // notify to manager
