@@ -13,14 +13,14 @@ var argv = yargs
 //var verboseLog = argv.verbose ? console.log : function(){}
 
 // set cpu usage
-var usage       = require('usage');
-if(argv.test){
-  setInterval(function (){
-    usage.lookup(process.pid, function(err, result) {
-      console.log('[USAGE] cpu: ' + result.cpu + ', memory: ' + result.memory);
-    });
-  }, 1000);
-}
+//var usage       = require('usage');
+//if(argv.test){
+//  setInterval(function (){
+//    usage.lookup(process.pid, function(err, result) {
+//      console.log('[USAGE] cpu: ' + result.cpu + ', memory: ' + result.memory);
+//    });
+//  }, 1000);
+//}
 
 //==============================================================================
 // start server
